@@ -9,6 +9,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RectButton } from 'react-native-gesture-handler';
 import api from '../services/api';
 
+import { requestPermissionsAsync, getCurrentPositionAsync } from 'expo-location';
+
 interface Orphanage {
   id: number;
   name: string;
@@ -16,10 +18,32 @@ interface Orphanage {
   longitude: number;
 }
 
+interface Position {
+  latitude: number;
+  longitude: number;
+}
+
 export default function OrphanagesMap() {
-    const navigation = useNavigation();
+    const navigation = useNavigation();    
 
     const [orphanages, setOrphanages] = useState<Orphanage[]>([]);
+
+    const [ initialLocation, setInitialLocation] = useState<Position>({} as Position);
+
+    useEffect(() => {
+      async function loadInitialPosition() {
+        const { granted } = await requestPermissionsAsync();
+
+        if (granted) {
+          const { coords } = await getCurrentPositionAsync({accuracy: 1});
+
+        setInitialLocation(coords);
+        console.log(coords);
+        }
+      }
+            
+      loadInitialPosition();
+    }, []);
 
     useFocusEffect(() => {
       api.get('orphanages').then(response => {
@@ -42,8 +66,8 @@ export default function OrphanagesMap() {
             style={styles.map}
             provider={PROVIDER_GOOGLE} 
             initialRegion={{ 
-            latitude: -23.0430342, 
-            longitude: -46.3631732,
+            latitude: initialLocation.latitude, 
+            longitude: initialLocation.longitude,
             latitudeDelta: 0.008,
             longitudeDelta: 0.008,
             }} 

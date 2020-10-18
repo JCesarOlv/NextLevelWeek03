@@ -6,11 +6,35 @@ import { RectButton } from 'react-native-gesture-handler';
 import MapView, { MapEvent, Marker } from 'react-native-maps';
 
 import mapMarkerImg from '../../images/mapMarker.png';
+import { useEffect } from 'react';
+import { getCurrentPositionAsync, requestPermissionsAsync } from 'expo-location';
+
+interface Position {
+  latitude: number;
+  longitude: number;
+}
 
 export default function SelectMapPosition() {
   const navigation = useNavigation();
 
   const [position, setPosition] = useState({ latitude: 0, longitude: 0 });
+
+  const [ initialLocation, setInitialLocation] = useState<Position>({} as Position);
+
+  useEffect(() => {
+    async function loadInitialPosition() {
+      const { granted } = await requestPermissionsAsync();
+
+      if (granted) {
+        const { coords } = await getCurrentPositionAsync({accuracy: 1});
+
+      setInitialLocation(coords);
+      console.log(coords);
+      }
+    }
+          
+    loadInitialPosition();
+  }, []);
 
   function handleNextStep() {
     navigation.navigate('OrphanageData', { position });
@@ -24,8 +48,8 @@ export default function SelectMapPosition() {
     <View style={styles.container}>
       <MapView 
         initialRegion={{
-          latitude: -27.2092052,
-          longitude: -49.6401092,
+          latitude: initialLocation.latitude,
+          longitude: initialLocation.longitude,
           latitudeDelta: 0.008,
           longitudeDelta: 0.008,
         }}
